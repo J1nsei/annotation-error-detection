@@ -1,0 +1,7 @@
+data: data.yaml
+epochs: 20
+batch: -1
+save: True
+verbose: True
+seed: 0
+exist_ok: True
