@@ -65,14 +65,14 @@ def create_fiftyone_dataset(data_path: Path, labels_file: str, VIS: str = '') ->
 def convert_coordinates(
     xmin: float,
     ymin: float,
-    xmax: float,
-    ymax: float,
+    w: float,
+    h: float,
     image_width: float,
     image_height: float
 ) -> list:
 
-    width = xmax - xmin
-    height = ymax - ymin
+    width = w
+    height = h
     top_left_x = xmin
     top_left_y = ymin
 
@@ -106,8 +106,8 @@ def convert_preds(
             bounding_box = convert_coordinates(
                 row['xmin'],
                 row['ymin'],
-                row['xmax'],
-                row['ymax'],
+                row['w'],
+                row['h'],
                 image_width,
                 image_height
             )

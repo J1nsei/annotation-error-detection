@@ -11,8 +11,8 @@ TARGETS_DF_COLUMNS = [
     "label_id",
     "xmin",
     "ymin",
-    "xmax",
-    "ymax",
+    "w",
+    "h",
 ]
 PREDS_DF_COLUMNS = [
     "pred_id",
@@ -20,8 +20,8 @@ PREDS_DF_COLUMNS = [
     "label_id",
     "xmin",
     "ymin",
-    "xmax",
-    "ymax",
+    "w",
+    "h",
     "score",
 ]
 ERRORS_DF_COLUMNS = ["pred_id", "target_id", "error_type"]
@@ -42,6 +42,7 @@ class ErrorType:
 def classify_predictions_errors(
         targets_df: pd.DataFrame,
         preds_df: pd.DataFrame,
+        images_df: pd.DataFrame,
         iou_background: float = BACKGROUND_IOU_THRESHOLD,
         iou_foreground: float = FOREGROUND_IOU_THRESHOLD,
 ) -> pd.DataFrame:
@@ -103,9 +104,9 @@ def classify_predictions_errors(
 
     missed_targets = _find_missed_targets(targets_df, pred2target)
     errors_df = _format_errors_as_dataframe(
-        pred2error, pred2target, missed_targets
+        pred2error, pred2target, missed_targets, targets_df, preds_df, images_df
     )
-    return errors_df[list(ERRORS_DF_COLUMNS)]
+    return errors_df
 
 
 def _process_empty_image(im_preds_df: pd.DataFrame) -> Dict[int, str]:
@@ -118,12 +119,17 @@ def _process_empty_image(im_preds_df: pd.DataFrame) -> Dict[int, str]:
 def _compute_iou_matrices(
         im_targets_df: pd.DataFrame, im_preds_df: pd.DataFrame
 ) -> Tuple[np.array, np.array]:
+    target_boxes = im_targets_df[["xmin", "ymin", "w", "h"]].values
+    target_boxes[:, 2] += target_boxes[:, 0]
+    target_boxes[:, 3] += target_boxes[:, 1]
 
-    iou_matrix = iou_matrix = torchvision.ops.box_iou(
-        torch.from_numpy(
-            im_targets_df[["xmin", "ymin", "xmax", "ymax"]].values
-        ),
-        torch.from_numpy(im_preds_df[["xmin", "ymin", "xmax", "ymax"]].values),
+    pred_boxes = im_preds_df[["xmin", "ymin", "w", "h"]].values
+    pred_boxes[:, 2] += pred_boxes[:, 0]
+    pred_boxes[:, 3] += pred_boxes[:, 1]
+
+    iou_matrix = torchvision.ops.box_iou(
+        torch.from_numpy(target_boxes),
+        torch.from_numpy(pred_boxes),
     ).numpy()
 
 
@@ -212,6 +218,9 @@ def _format_errors_as_dataframe(
         pred2error: Dict[int, str],
         pred2target: Dict[int, int],
         missed_targets: Set[int],
+        targets_df,
+        preds_df,
+        images_df
 ) -> pd.DataFrame:
 
     errors_df = pd.DataFrame.from_records(
@@ -220,14 +229,14 @@ def _format_errors_as_dataframe(
             for pred_id, error in pred2error.items()
         ]
     )
-    errors_df["target_id"] = None
+    errors_df["target_id"] = np.nan
     errors_df.set_index("pred_id", inplace=True)
     for pred_id, target_id in pred2target.items():
         errors_df.at[pred_id, "target_id"] = target_id
 
     missed_df = pd.DataFrame(
         {
-            "pred_id": None,
+            "pred_id": np.nan,
             "error_type": ErrorType.MISS,
             "target_id": list(missed_targets),
         }
@@ -237,5 +246,14 @@ def _format_errors_as_dataframe(
     ).astype(
         {"pred_id": pd.Int64Dtype(), "target_id": pd.Int64Dtype(), "error_type": pd.StringDtype()}
     )
+    errors_df['file_name'] = None
+    for index, row in errors_df.iterrows():
+        if pd.notna(row['pred_id']):
+            id = row['pred_id']
+            image_id = preds_df.loc[preds_df['pred_id'] == id, 'image_id'].values[0]
+        else:
+            id = row['target_id']
+            image_id = targets_df.loc[targets_df['target_id'] == id, 'image_id'].values[0]
 
+        errors_df.at[index, 'file_name'] = images_df.loc[images_df['image_id'] == image_id, 'file_name'].values[0]
     return errors_df

@@ -28,15 +28,13 @@ def load_dataset(
 
     targets_df = pd.DataFrame.from_records(targets_json["annotations"])
     targets_df[["xmin", "ymin", "w", "h"]] = targets_df["bbox"].tolist()
-    targets_df["xmax"] = targets_df["xmin"] + targets_df["w"]
-    targets_df["ymax"] = targets_df["ymin"] + targets_df["h"]
     targets_df.reset_index(inplace=True)
     targets_df['index'] = targets_df['id']
     targets_df.rename(
         columns={"index": "target_id", "category_id": "label_id"}, inplace=True
     )
     targets_df = targets_df[
-        ["target_id", "image_id", "label_id", "xmin", "ymin", "xmax", "ymax"]
+        ["target_id", "image_id", "label_id", "xmin", "ymin", "w", "h"]
     ]
 
     return images_df, targets_df
@@ -134,19 +132,19 @@ def convert_coco(labels_dir='../coco/annotations/'):
 
 def create_yolo_dataset(data_path: Path, train_fraction: float = 0.6, n_splits = 5):
 
-    yolo_labels = Path('./yolo_labels/')
-
-    if yolo_labels.exists():
-        pass
-    else:
-
-        convert_coco(labels_dir=data_path)
-
-
-    shutil.move(yolo_labels / 'labels' / 'labels', data_path)
-    (yolo_labels / 'labels').rmdir()
-    (yolo_labels / 'images').rmdir()
-    yolo_labels.rmdir()
+    # yolo_labels = Path('./yolo_labels/')
+    #
+    # if yolo_labels.exists():
+    #     pass
+    # else:
+    #
+    #     convert_coco(labels_dir=data_path)
+    #
+    # shutil.rmtree(data_path / 'labels')
+    # shutil.move(yolo_labels / 'labels' / 'labels', data_path)
+    # shutil.rmtree(yolo_labels / 'labels')
+    # shutil.rmtree(yolo_labels / 'images')
+    # shutil.rmtree(yolo_labels)
 
     annotations_path = data_path / "labels.json"
     with open(annotations_path, "r") as f:
@@ -196,7 +194,7 @@ def create_yolo_dataset(data_path: Path, train_fraction: float = 0.6, n_splits =
         val['file_name'] = './images/' + val['file_name']
         np.savetxt('./' + str(data_path) + '/' + yolo_train, train['file_name'], fmt='%s')
         np.savetxt('./' + str(data_path) + '/' + yolo_val, val['file_name'], fmt='%s')
-        np.savetxt('./' + str(data_path) + '/' + yolo_test, test['file_name'], fmt='%s')
+        np.savetxt('./' + str(data_path) + '/' + yolo_test, test['file_name'], fmt='%s', )
         data_yaml = {'path': '../' + str(data_path),
                      'train': yolo_train,
                      'val': yolo_val,

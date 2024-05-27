@@ -63,12 +63,12 @@ def YOLOres2COCO(results: ultralytics.engine.results.Results, image_id: int) -> 
     bboxes = _uncenter_boxes(results[0].boxes.xywh)
     scores = results[0].boxes.conf.cpu().numpy()
     categories = results[0].boxes.cls.cpu().numpy()
-    res = pd.DataFrame(columns=['target_id', 'image_id', 'label_id', 'xmin', 'ymin', 'xmax', 'ymax', 'score'])
+    res = pd.DataFrame(columns=['target_id', 'image_id', 'label_id', 'xmin', 'ymin', 'w', 'h', 'score'])
     res = res.astype({'target_id': 'int', 'image_id': 'int', 'label_id': 'int'})
     i = 0
     for catId in categories:
         bbox = bboxes[i].tolist()
-        res.loc[i] = [i, image_id, catId, bbox[0], bbox[1], bbox[0] + bbox[2], bbox[1] + bbox[3], scores[i]]
+        res.loc[i] = [i, image_id, catId, bbox[0], bbox[1], bbox[2], bbox[3], scores[i]]
         i += 1
 
     res = res.astype({'target_id': 'int', 'image_id': 'int', 'label_id': 'int'})
@@ -87,7 +87,7 @@ def get_predictions(
 
     if PREDS:
         return pd.read_pickle(PREDS)
-    preds_df = pd.DataFrame(columns=["image_id", "label_id", "xmin", "ymin", "xmax", "ymax", "score"])
+    preds_df = pd.DataFrame(columns=["image_id", "label_id", "xmin", "ymin", "w", "h", "score"])
     for img in tqdm(range(len(images_df)), desc='Making predictions'):
         output = model.predict(images_path / images_df['file_name'][img], device=device, **pred_args)
         pred = YOLOres2COCO(output, images_df['image_id'][img]).drop(columns=['target_id'])

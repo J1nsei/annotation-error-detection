@@ -30,6 +30,9 @@ def main():
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     model = YOLO(MODEL)
 
+
+
+
     if TRAIN_MODE:
         with open('models/train_config.yaml', 'r') as train_cfg:
             train_args = yaml.safe_load(train_cfg)
@@ -47,9 +50,10 @@ def main():
         images_df, targets_df = load_dataset(DATA_PATH, LABELS)
         images_path, id2label = get_utils_variables(DATA_PATH, LABELS)
         preds_df = get_predictions(model, device, images_path, images_df, id2label, pred_args, PREDS)
-        errors_df = classify_predictions_errors(targets_df, preds_df)
+        errors_df = classify_predictions_errors(targets_df, preds_df, images_df)
         os.makedirs('errors_found', exist_ok=True)
         os.makedirs('predictions', exist_ok=True)
+        print(errors_df.columns)
         errors_df.to_pickle(f'errors_found/errors_df_{LABELS}.pkl', )
         preds_df.to_pickle(f'./predictions/preds_{LABELS}.pkl') if SAVE_PREDS else None
         print(errors_df["error_type"].value_counts())

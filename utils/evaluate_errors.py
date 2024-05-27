@@ -15,7 +15,8 @@ class MyMeanAveragePrecision:
             else torch.device("cpu")
         )
         self.map = MeanAveragePrecision(
-            iou_thresholds=[foreground_threshold]
+            iou_thresholds=[foreground_threshold],
+            box_format='xywh'
         ).to(self.device)
 
     def __call__(self, targets_df, preds_df, error_type):
@@ -32,10 +33,11 @@ class MyMeanAveragePrecision:
         for image_id in tqdm(image_ids, desc=desc):
             im_targets_df = targets_df.query("image_id == @image_id")
             im_preds_df = preds_df.query("image_id == @image_id")
+
             targets.append(
                 {
                     "boxes": torch.as_tensor(
-                        im_targets_df[["xmin", "ymin", "xmax", "ymax"]].values,
+                        im_targets_df[["xmin", "ymin", "w", "h"]].values,
                         dtype=torch.float32,
                     ).to(self.device),
                     "labels": torch.as_tensor(
@@ -46,7 +48,7 @@ class MyMeanAveragePrecision:
             preds.append(
                 {
                     "boxes": torch.as_tensor(
-                        im_preds_df[["xmin", "ymin", "xmax", "ymax"]].values,
+                        im_preds_df[["xmin", "ymin", "w", "h"]].values,
                         dtype=torch.float32,
                     ).to(self.device),
                     "labels": torch.as_tensor(
@@ -187,7 +189,7 @@ def _fix_by_correcting_and_removing_preds(
 
     cols_to_correct = {
         ErrorType.CLS: ["label_id"],
-        ErrorType.LOC: ["xmin", "ymin", "xmax", "ymax"],
+        ErrorType.LOC: ["xmin", "ymin", "w", "h"],
     }[error_type]
     error_types = [ErrorType.OK, ErrorType.CLS, ErrorType.LOC]
 
