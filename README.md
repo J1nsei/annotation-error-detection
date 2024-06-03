@@ -27,10 +27,10 @@
     - Датафрейм с ошибками будет сохранен в папке errors_found.
 - Запуск в режиме обучения:
     - Для первого запуска обучения необходимо создать датасет для YOLO модели (--create_dataset), а также выбрать подвыборку для теста (--labels):
-        ``` python3 main.py --data='./dataset' --model='./models/default/demo.pt' --train=Train --create_dataset=True --labels="labels_1.json"```
+        ``` python3 main.py --data='./dataset' --model='./models/default/demo.pt' --train=True --create_dataset=True --labels="labels_1.json"```
     - После создания датасета, данные разделятся на 5 комбинаций: data_N.yaml. Каждой комбинации соответствует своя тестовая выбора labels_N.json, которая не учавствует в обучении и валидации модели. Также обучатся 5 моделей YOLO, лучшие веса для каждой подвыборки будут находится в соответствующей папке trained_yolo/split/weights/best.pt.
     - Последующие запуски обучения:
-        ``` python3 main.py --data='./dataset' --model='./models/default/demo.pt' --train=Train --labels="labels_2.json"```
+        ``` python3 main.py --data='./dataset' --model='./models/default/demo.pt' --train=True --labels="labels_2.json"```
 - Описание параметров:
     - **data** = './dataset' (путь к директории с датасетом).
     - **model** = './models/my_model.pt' (путь к модели)
