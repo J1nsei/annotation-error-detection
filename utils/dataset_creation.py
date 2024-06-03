@@ -132,19 +132,13 @@ def convert_coco(labels_dir='../coco/annotations/'):
 
 def create_yolo_dataset(data_path: Path, train_fraction: float = 0.6, n_splits = 5):
 
-    # yolo_labels = Path('./yolo_labels/')
-    #
-    # if yolo_labels.exists():
-    #     pass
-    # else:
-    #
-    #     convert_coco(labels_dir=data_path)
-    #
-    # shutil.rmtree(data_path / 'labels')
-    # shutil.move(yolo_labels / 'labels' / 'labels', data_path)
-    # shutil.rmtree(yolo_labels / 'labels')
-    # shutil.rmtree(yolo_labels / 'images')
-    # shutil.rmtree(yolo_labels)
+    yolo_labels = Path('./yolo_labels/')
+    
+    if yolo_labels.exists():
+        shutil.rmtree(yolo_labels, ignore_errors=True)
+    shutil.rmtree(data_path / 'labels', ignore_errors=True)
+    shutil.move(yolo_labels / 'labels' / 'labels', data_path)
+    shutil.rmtree(yolo_labels, ignore_errors=True)
 
     annotations_path = data_path / "labels.json"
     with open(annotations_path, "r") as f:
