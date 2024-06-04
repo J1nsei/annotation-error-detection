@@ -199,6 +199,23 @@ def create_yolo_dataset(data_path: Path, train_fraction: float = 0.6, n_splits =
                      }
         with open(f'data_{split_index}.yaml', 'w') as outfile:
             yaml.dump(data_yaml, outfile, default_flow_style=None, sort_keys=False)
+
+    with open('dataset/labels.json', 'r') as f:
+    coco_data = json.load(f)
+    for split in tqdm(range(1,6)):
+        with open(f'dataset/yolo_test_{split}.txt', 'r') as f:
+            subset_files = [line.strip().replace('./images/', '').replace('.txt', '') for line in f]
+        subset_files_set = set(subset_files)
+        filtered_images = [image for image in coco_data['images'] if image['file_name'] in subset_files_set]
+        filtered_image_ids = set(image['id'] for image in filtered_images)
+        filtered_annotations = [ann for ann in coco_data['annotations'] if ann['image_id'] in filtered_image_ids]
+        new_coco_data = {
+            'images': filtered_images,
+            'annotations': filtered_annotations,
+            'categories': coco_data['categories']  
+        }
+        with open(f'dataset/labels_{split}.json', 'w') as f:
+            json.dump(new_coco_data, f, indent=4)
     print('Dataset is ready\n')
 
     return
