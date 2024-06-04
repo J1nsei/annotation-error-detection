@@ -96,7 +96,9 @@ def convert_preds(
         img_id = sample.coco_id
         image_width = sample.metadata['width']
         image_height = sample.metadata['height']
-
+        if image_width==image_height==0:
+            image_width = image_height = 1
+            print('\nWarning missing width and height metadata in annotation file!\n')
         detections = []
 
         for _, row in preds_df.query('image_id==@img_id').iterrows():
