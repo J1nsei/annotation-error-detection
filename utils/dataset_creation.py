@@ -136,6 +136,7 @@ def create_yolo_dataset(data_path: Path, train_fraction: float = 0.6, n_splits =
     
     if yolo_labels.exists():
         shutil.rmtree(yolo_labels, ignore_errors=True)
+    convert_coco(labels_dir=data_path)
     shutil.rmtree(data_path / 'labels', ignore_errors=True)
     shutil.move(yolo_labels / 'labels' / 'labels', data_path)
     shutil.rmtree(yolo_labels, ignore_errors=True)
